@@ -3,6 +3,9 @@ const {
   fetchTranscriptFromS3,
   listFilesInBucket,
 } = require("../services/s3Service");
+const {
+  transcribeAudioStream,
+} = require("../services/transcribeStreamingService");
 
 exports.startTranscriptionJob = async (req, res) => {
   const { audioUrl } = req.body;
@@ -26,11 +29,7 @@ exports.getTranscriptionStatus = async (req, res) => {
 
   try {
     const { status, transcriptFileUri } = await getJobStatus(jobName);
-    if (status === "COMPLETED") {
-      res.json({ status, transcriptFileUri });
-    } else {
-      res.json({ status });
-    }
+    res.json({ status, transcriptFileUri });
   } catch (error) {
     console.error("Error getting transcription job status:", error.message);
     res.status(500).json({ error: "Failed to get transcription job status" });
@@ -41,7 +40,7 @@ exports.getTranscriptText = async (req, res) => {
   const { jobName } = req.params;
 
   const bucketName = "persona-pal-audio";
-  const key = jobName.endsWith(".json") ? jobName : `${jobName}.json`;
+  const key = `${jobName}.json`;
 
   try {
     const transcriptData = await fetchTranscriptFromS3(bucketName, key);
@@ -60,5 +59,15 @@ exports.listFilesInS3 = async (req, res) => {
   } catch (error) {
     console.error("Error listing files in S3:", error.message);
     res.status(500).json({ error: "Failed to list files in S3" });
+  }
+};
+
+exports.streamTranscription = async (req, res) => {
+  try {
+    const transcriptionResult = await transcribeAudioStream(req);
+    res.json({ transcription: transcriptionResult });
+  } catch (error) {
+    console.error("Error streaming transcription:", error.message);
+    res.status(500).json({ error: "Failed to stream transcription" });
   }
 };

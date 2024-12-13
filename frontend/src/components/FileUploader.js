@@ -22,8 +22,8 @@ function FileUploader({ setUploadedAudioUrl }) {
       }
 
       const data = await response.json();
-      console.log("Uploaded file URL:", data.fileUrl); // Log the S3 URL
-      setUploadedAudioUrl(data.fileUrl); // Update the uploaded audio URL
+      console.log("Uploaded file URL:", data.fileUrl); // Debug log
+      setUploadedAudioUrl(data.fileUrl); // Update state with S3 URL
       alert("File successfully uploaded!");
     } catch (error) {
       console.error("Error uploading file:", error);
