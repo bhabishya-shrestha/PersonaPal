@@ -1,18 +1,42 @@
-import React from "react";
+import React, { useState } from "react";
 
-function FileUploader({ setUploadedAudio }) {
-  const handleFileChange = (event) => {
+function FileUploader({ setUploadedAudioUrl }) {
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileChange = async (event) => {
     const file = event.target.files[0];
-    if (file) {
-      // Generate S3 URL for uploaded file (adjust if you're uploading dynamically)
-      const uploadedAudioUrl = `https://persona-pal-audio.s3.us-east-1.amazonaws.com/${file.name}`;
-      setUploadedAudio(uploadedAudioUrl);
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      setIsUploading(true);
+      const response = await fetch("http://localhost:5000/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload file.");
+      }
+
+      const data = await response.json();
+      console.log("Uploaded file URL:", data.fileUrl); // Log the S3 URL
+      setUploadedAudioUrl(data.fileUrl); // Update the uploaded audio URL
+      alert("File successfully uploaded!");
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      alert("Failed to upload file. See console for details.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
   return (
     <div>
-      <input type="file" accept="audio/*" onChange={handleFileChange} />
+      <input type="file" onChange={handleFileChange} disabled={isUploading} />
+      {isUploading && <p>Uploading...</p>}
     </div>
   );
 }

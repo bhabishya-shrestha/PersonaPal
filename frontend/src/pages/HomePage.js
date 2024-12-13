@@ -1,69 +1,49 @@
 import React, { useState } from "react";
 import FileUploader from "../components/FileUploader";
+import TextToSpeech from "../components/TextToSpeech";
+import { startTranscriptionJob } from "../utils/transcriptionService";
 
 function HomePage() {
-  const [text, setText] = useState("Hello from the AI voice!");
-  const [audioUrl, setAudioUrl] = useState(null);
-  const [uploadedAudio, setUploadedAudio] = useState(null);
-
-  const handleSpeak = async () => {
-    try {
-      const response = await fetch("http://localhost:5000/speak", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-
-      // Allow user to download the file
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "output.mp3";
-      link.click();
-
-      setAudioUrl(url);
-    } catch (error) {
-      console.error("Error calling /speak:", error);
-    }
-  };
+  const [uploadedAudioUrl, setUploadedAudioUrl] = useState(""); // URL of the uploaded audio file
+  const [transcriptionJobName, setTranscriptionJobName] = useState(""); // Transcription job name
+  const [isLoading, setIsLoading] = useState(false); // Loading state
 
   const handleTranscribe = async () => {
-    if (!uploadedAudio) {
-      alert("Please upload an audio file first.");
+    console.log("Uploaded Audio URL at Transcribe:", uploadedAudioUrl); // Debug log
+
+    if (!uploadedAudioUrl) {
+      alert("Please upload an audio file before starting transcription.");
       return;
     }
+
     try {
-      const response = await fetch("http://localhost:5000/transcribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ audioUrl: uploadedAudio }),
-      });
-      const data = await response.json();
-      console.log("Transcription Job Name:", data.transcriptionJobName);
-      alert(`Transcription Job Started: ${data.transcriptionJobName}`);
+      setIsLoading(true);
+      const jobName = await startTranscriptionJob(uploadedAudioUrl); // Call utility function
+      setTranscriptionJobName(jobName);
+      alert(`Transcription job started: ${jobName}`);
     } catch (error) {
-      console.error("Error calling /transcribe:", error);
+      console.error("Error starting transcription:", error);
       alert("Failed to start transcription job. See console for details.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div>
+    <div className="homepage">
       <h1>Welcome to PersonaPal</h1>
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        rows="4"
-        cols="50"
-      />
-      <br />
-      <button onClick={handleSpeak}>Generate Voice</button>
-      {audioUrl && <audio controls src={audioUrl}></audio>}
-      <br />
-      <FileUploader setUploadedAudio={setUploadedAudio} />
-      <br />
-      <button onClick={handleTranscribe}>Start Transcription</button>
+
+      {/* Text-to-Speech Section */}
+      <TextToSpeech />
+
+      {/* File Upload Section */}
+      <FileUploader setUploadedAudioUrl={setUploadedAudioUrl} />
+
+      {/* Transcription Section */}
+      <button onClick={handleTranscribe} disabled={isLoading}>
+        {isLoading ? "Processing..." : "Start Transcription"}
+      </button>
+      {transcriptionJobName && <p>Transcription Job: {transcriptionJobName}</p>}
     </div>
   );
 }
