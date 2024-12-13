@@ -24,7 +24,7 @@ exports.startJob = async (audioUrl) => {
     console.log("AWS Transcribe response:", response);
     return response.TranscriptionJob.TranscriptionJobName;
   } catch (error) {
-    console.error("Error starting transcription job:", error);
+    console.error("Error starting transcription job:", error.message);
     throw new Error("Failed to start transcription job");
   }
 };
@@ -40,7 +40,7 @@ exports.getJobStatus = async (jobName) => {
       data.TranscriptionJob.Transcript?.TranscriptFileUri;
     return { status, transcriptFileUri };
   } catch (error) {
-    console.error("Error getting transcription job status:", error);
+    console.error("Error getting transcription job status:", error.message);
     throw new Error("Failed to get transcription job status");
   }
 };

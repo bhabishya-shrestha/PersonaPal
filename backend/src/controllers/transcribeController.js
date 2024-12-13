@@ -1,5 +1,8 @@
 const { startJob, getJobStatus } = require("../services/transcribeService");
-const { fetchTranscriptFromS3 } = require("../services/s3Service");
+const {
+  fetchTranscriptFromS3,
+  listFilesInBucket,
+} = require("../services/s3Service");
 
 exports.startTranscriptionJob = async (req, res) => {
   const { audioUrl } = req.body;
@@ -38,7 +41,7 @@ exports.getTranscriptText = async (req, res) => {
   const { jobName } = req.params;
 
   const bucketName = "persona-pal-audio";
-  const key = `${jobName}.json`;
+  const key = jobName.endsWith(".json") ? jobName : `${jobName}.json`;
 
   try {
     const transcriptData = await fetchTranscriptFromS3(bucketName, key);
@@ -47,5 +50,15 @@ exports.getTranscriptText = async (req, res) => {
   } catch (error) {
     console.error("Error fetching transcript:", error.message);
     res.status(500).json({ error: "Failed to fetch transcript" });
+  }
+};
+
+exports.listFilesInS3 = async (req, res) => {
+  try {
+    const files = await listFilesInBucket();
+    res.json({ files });
+  } catch (error) {
+    console.error("Error listing files in S3:", error.message);
+    res.status(500).json({ error: "Failed to list files in S3" });
   }
 };
