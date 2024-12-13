@@ -1,23 +1,26 @@
-const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
-const s3 = new S3Client({ region: process.env.AWS_REGION });
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
-exports.fetchTranscriptFromS3 = async (bucketName, key) => {
-  const command = new GetObjectCommand({ Bucket: bucketName, Key: key });
-  const response = await s3.send(command);
+const s3Client = new S3Client({ region: process.env.AWS_REGION });
 
-  const transcriptData = await new Promise((resolve, reject) => {
-    const chunks = [];
-    response.Body.on("data", (chunk) => chunks.push(chunk));
-    response.Body.on("end", () => {
-      try {
-        const data = Buffer.concat(chunks).toString();
-        resolve(JSON.parse(data));
-      } catch (err) {
-        reject(err);
-      }
-    });
-    response.Body.on("error", reject);
-  });
+exports.uploadFileToS3 = async (fileBuffer, fileName) => {
+  const bucketName = "persona-pal-audio";
 
-  return transcriptData;
+  const params = {
+    Bucket: bucketName,
+    Key: fileName,
+    Body: fileBuffer,
+    ContentType: "audio/mpeg", // Ensure this matches your file type
+  };
+
+  try {
+    const command = new PutObjectCommand(params);
+    const response = await s3Client.send(command);
+    return {
+      Location: `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`,
+      ETag: response.ETag,
+    };
+  } catch (error) {
+    console.error("Error uploading file to S3:", error);
+    throw new Error("Failed to upload file to S3");
+  }
 };

@@ -17,17 +17,30 @@ exports.startJob = async (audioUrl) => {
     OutputBucketName: "persona-pal-audio",
   };
 
-  const command = new StartTranscriptionJobCommand(params);
-  const data = await transcribeClient.send(command);
-  return data.TranscriptionJob.TranscriptionJobName;
+  try {
+    console.log("Starting transcription job with params:", params);
+    const command = new StartTranscriptionJobCommand(params);
+    const response = await transcribeClient.send(command);
+    console.log("AWS Transcribe response:", response);
+    return response.TranscriptionJob.TranscriptionJobName;
+  } catch (error) {
+    console.error("Error starting transcription job:", error);
+    throw new Error("Failed to start transcription job");
+  }
 };
 
 exports.getJobStatus = async (jobName) => {
   const params = { TranscriptionJobName: jobName };
   const command = new GetTranscriptionJobCommand(params);
-  const data = await transcribeClient.send(command);
 
-  const status = data.TranscriptionJob.TranscriptionJobStatus;
-  const transcriptFileUri = data.TranscriptionJob.Transcript?.TranscriptFileUri;
-  return { status, transcriptFileUri };
+  try {
+    const data = await transcribeClient.send(command);
+    const status = data.TranscriptionJob.TranscriptionJobStatus;
+    const transcriptFileUri =
+      data.TranscriptionJob.Transcript?.TranscriptFileUri;
+    return { status, transcriptFileUri };
+  } catch (error) {
+    console.error("Error getting transcription job status:", error);
+    throw new Error("Failed to get transcription job status");
+  }
 };

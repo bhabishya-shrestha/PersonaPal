@@ -5,6 +5,7 @@ const cors = require("cors");
 // Route imports
 const transcribeRoutes = require("./routes/transcribeRoutes");
 const ttsRoutes = require("./routes/ttsRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
 
 const app = express();
 app.use(cors());
@@ -18,5 +19,6 @@ app.get("/hello", (req, res) => {
 // Use Routes
 app.use("/", transcribeRoutes);
 app.use("/", ttsRoutes);
+app.use("/", uploadRoutes);
 
 module.exports = app;

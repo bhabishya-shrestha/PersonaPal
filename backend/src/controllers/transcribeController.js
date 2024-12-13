@@ -4,12 +4,17 @@ const { fetchTranscriptFromS3 } = require("../services/s3Service");
 exports.startTranscriptionJob = async (req, res) => {
   const { audioUrl } = req.body;
 
+  if (!audioUrl) {
+    return res.status(400).json({ error: "Audio URL is required" });
+  }
+
   try {
+    console.log("Received audioUrl for transcription:", audioUrl);
     const jobName = await startJob(audioUrl);
     res.json({ transcriptionJobName: jobName });
   } catch (error) {
-    console.error("Error starting transcription job:", error);
-    res.status(500).send("Error starting transcription job");
+    console.error("Error starting transcription job:", error.message);
+    res.status(500).json({ error: "Failed to start transcription job" });
   }
 };
 
@@ -24,15 +29,14 @@ exports.getTranscriptionStatus = async (req, res) => {
       res.json({ status });
     }
   } catch (error) {
-    console.error("Error getting transcription job status:", error);
-    res.status(500).send("Error getting transcription job status");
+    console.error("Error getting transcription job status:", error.message);
+    res.status(500).json({ error: "Failed to get transcription job status" });
   }
 };
 
 exports.getTranscriptText = async (req, res) => {
   const { jobName } = req.params;
 
-  // Derive bucketName and key from transcriptFileUri previously obtained or have them standardized
   const bucketName = "persona-pal-audio";
   const key = `${jobName}.json`;
 
@@ -41,7 +45,7 @@ exports.getTranscriptText = async (req, res) => {
     const transcribedText = transcriptData.results.transcripts[0].transcript;
     res.json({ transcript: transcribedText });
   } catch (error) {
-    console.error("Error fetching transcript:", error);
-    res.status(500).send("Error fetching transcript");
+    console.error("Error fetching transcript:", error.message);
+    res.status(500).json({ error: "Failed to fetch transcript" });
   }
 };

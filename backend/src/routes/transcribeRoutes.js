@@ -13,6 +13,6 @@ router.post("/transcribe", startTranscriptionJob);
 router.get("/transcription-status/:jobName", getTranscriptionStatus);
 
 // Fetch transcript text from S3
-router.get("/get-transcript/:jobName", getTranscriptText);
+router.get("/transcription-result/:jobName", getTranscriptText);
 
 module.exports = router;
